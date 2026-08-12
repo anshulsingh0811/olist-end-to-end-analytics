@@ -1,0 +1,2 @@
+--Data was loaded into PostgreSQL using the psql \copy command
+--\copy table_name from 'filepath' with (format csv,header true);
