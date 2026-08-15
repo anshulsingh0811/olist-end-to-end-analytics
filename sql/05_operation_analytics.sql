@@ -48,7 +48,7 @@ FROM approval;
 
 -- 3. Did Olist deliver orders by the date it promised
 SELECT 
-    ROUND(100* 
+    ROUND(100.0 * 
     SUM(CASE 
         WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1
         ELSE 0
@@ -287,39 +287,3 @@ WITH category_freight AS (
         p.product_category_name,
         pct.product_category_name_english
 ),
-
-ranked_categories AS (
-    SELECT
-        *,
-        RANK() OVER (
-            ORDER BY avg_freight_per_item DESC
-        ) AS freight_rank,
-
-        RANK() OVER (
-            ORDER BY avg_weight_kg DESC
-        ) AS weight_rank,
-
-        RANK() OVER (
-            ORDER BY avg_volume_cm3 DESC
-        ) AS volume_rank
-    FROM category_freight
-)
-
-SELECT
-    product_category_name,
-    product_category_name_english,
-    order_item_count,
-    avg_freight_per_item,
-    avg_weight_kg,
-    avg_volume_cm3,
-    freight_rank,
-    weight_rank,
-    volume_rank,
-    weight_rank - freight_rank AS freight_vs_weight_gap,
-    volume_rank - freight_rank AS freight_vs_volume_gap
-FROM ranked_categories
-WHERE freight_rank < weight_rank
-   OR freight_rank < volume_rank
-ORDER BY
-    freight_vs_weight_gap DESC,
-    freight_vs_volume_gap DESC;
