@@ -132,3 +132,11 @@ SELECT
 FROM orders;
 --  "first_order": "2016-09-04 21:15:19"
 --  "last_order": "2018-10-17 17:30:18"
+
+-- 4. Order Status
+
+SELECT order_status,
+    COUNT(*)
+FROM orders
+GROUP BY order_status;
+

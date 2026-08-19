@@ -155,34 +155,27 @@ Some high-volume sellers also underperformed like One seller with 389 orders had
 
 -- Q4. Are late deliveries associated with lower customer review scores?
 
-WITH order_reviews AS(
-    SELECT 
-        order_id,
-        AVG (review_score) AS avg_review_score
-    FROM reviews
-    WHERE review_score IS NOT NULL
-    GROUP BY order_id
-),
-order_performance AS(
-    SELECT 
-        o.order_id,
-        CASE
-            WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date
-            THEN 1 ELSE 0
-        END AS on_time,
-        avg_review_score
-    FROM orders o INNER JOIN order_reviews o_r
-    ON o.order_id = o_r.order_id
-    WHERE o.order_status = 'delivered'
-    AND o.order_delivered_customer_date IS NOT NULL
-    AND o.order_estimated_delivery_date IS NOT NULL
-)
-SELECT 
-    ROUND(AVG(avg_review_score)FILTER (WHERE on_time = 1)
-    ,2) AS on_time_avg_review,
-    ROUND(AVG(avg_review_score)FILTER (WHERE on_time = 0)
-    ,2) AS late_avg_review
-FROM order_performance;
+CREATE VIEW vw_delivery_review AS
+SELECT
+    CASE
+        WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date
+            THEN 'On-Time'
+        ELSE 'Late'
+        END AS delivery_status,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    ROUND(AVG(r.review_score),2) AS avg_review_score
+FROM orders o
+JOIN reviews r
+    ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered'
+  AND o.order_delivered_customer_date IS NOT NULL
+  AND o.order_estimated_delivery_date IS NOT NULL
+  AND r.review_score IS NOT NULL
+GROUP BY
+    CASE
+        WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date
+            THEN 'On-Time' ELSE 'Late'
+    END;
 /*Observations:
 - On-time orders had an average review score of 4.29, while late orders scored 2.57.
 - That is a 1.72-point difference, showing that late delivery is linked with much lower review scores.
